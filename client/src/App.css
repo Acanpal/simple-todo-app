@@ -1,0 +1,168 @@
+/* メインコンテナ */
+.container {
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: #333;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+
+/* タイトル */
+.title {
+  font-size: 2.5em;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  color: #646cff;
+}
+
+/* 入力フォーム周り */
+.form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 2rem;
+}
+
+/* 入力ボックス */
+.input {
+  flex: 1;
+  padding: 0.8em 1.2em;
+  font-size: 1em;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background-color: #1a1a1a;
+  color: white;
+  transition: border-color 0.25s;
+}
+
+.input:focus {
+  border-color: #646cff;
+  outline: none;
+}
+
+/* ボタン */
+.button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #646cff;
+  color: white;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+
+.button:hover {
+  border-color: #646cff;
+  background-color: #535bf2;
+}
+
+/* リスト */
+.list {
+  list-style: none;
+  padding: 0;
+  text-align: left;
+}
+
+/* リストアイテム */
+.item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  /* サイズを大きく */
+  background-color: transparent;
+  /* 背景色は親(.sortable-card)に任せる */
+  border-radius: 0;
+  margin-bottom: 0;
+  border-left: none;
+  font-size: 1.25em;
+  /* 文字サイズを大きく */
+  transition: transform 0.1s;
+}
+
+/* 通常モードのテキスト (編集モードのinputと高さを合わせるため透明な枠線を足す) */
+.item span {
+  border-bottom: 1px solid transparent;
+}
+
+.item:hover {
+  transform: translateX(5px);
+}
+
+.delete-button {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  padding: 0.4em 0.8em;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s;
+  margin-left: 10px;
+}
+
+.delete-button:hover {
+  background-color: #ff7875;
+}
+
+/* 編集用入力ボックス (テキストのような見た目にする) */
+.edit-input {
+  flex-grow: 1;
+  /* spanのflexGrow: 1と合わせる */
+  min-width: 0;
+  /* Flexbox内での幅あふれ防止 */
+  font-size: inherit;
+  font-family: inherit;
+  background-color: transparent;
+  color: inherit;
+  border: none;
+  border-bottom: 1px solid #646cff;
+  /* 編集モードだとわかるように下線だけ引く */
+  outline: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* カード風コンテナ (SortableItem) */
+.sortable-card {
+  background-color: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+  /* ハンドルの角丸用 */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  margin-bottom: 16px;
+  /* アイテムの間隔を広げる */
+  transition: box-shadow 0.2s;
+  /* transformのtransitionはdnd-kitと競合して重くなるので削除 */
+  border: 1px solid #444;
+}
+
+/* ドラッグハンドル (ウィンドウのバー) */
+.drag-handle {
+  background-color: #444;
+  height: 24px;
+  /* 指で掴みやすい高さを確保 */
+  cursor: grab;
+  /* グリップ感を出すための装飾 (CSSグラデーションで縞模様を作る) */
+  background-image: linear-gradient(transparent 50%,
+      rgba(255, 255, 255, 0.1) 50%);
+  background-size: 100% 4px;
+  /* 4pxごとの縞模様 */
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+  background-color: #646cff;
+  /* 掴んだら色を変える */
+}
+
+/* コンテンツエリア */
+.sortable-content {
+  padding: 0;
+  /* .item が padding を持っているのでここは0で */
+}
