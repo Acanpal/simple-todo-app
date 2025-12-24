@@ -1,85 +1,131 @@
 const express = require('express');
-const cors = require('cors'); // 追加
+const cors = require('cors');
+const { PrismaClient } = require('@prisma/client'); // PrismaClientを読み込み
+
 const app = express();
+const prisma = new PrismaClient(); // Prismaクライアントを初期化 (これでDBと繋がる！)
 const PORT = 3000;
 
-app.use(cors()); // CORSを許可
-app.use(express.json()); // JSONを受け取れるようにする (必須！)
+app.use(cors());
+app.use(express.json());
 
 
-// モックデータ (サーバーのメモリにあるだけのデータ)
-const todos = [
-  { id: 1, title: "Reactを勉強する" },
-  { id: 2, title: "部屋を掃除する" },
-  { id: 3, title: "散歩に行く" }
-];
 
 // Todoリストを返す API
-app.get('/api/todos', (req, res) => {
-  res.json(todos);
+// DBから全てのTodoを取得して返します
+app.get('/api/todos', async (req, res) => {
+  try {
+    const todos = await prisma.todo.findMany({
+      orderBy: {
+        order: 'asc', // orderの順(昇順)で取得
+      },
+    });
+    res.json(todos);
+  } catch (error) {
+    console.error("取得に失敗しました", error);
+    res.status(500).json({ error: "データの取得に失敗しました" });
+  }
 });
 
 // 新しいTodoを追加する API
-app.post('/api/todos', (req, res) => {
-  const newTodo = req.body; // 送られてきたデータ { title: "..." }
-  // IDを現在時刻(ミリ秒)にする。これで重複しなくなる。
-  // 注意: 本当は文字列にするのが安全ですが、今回は簡易的に数値のままでもOK
-  newTodo.id = Date.now();
-  todos.push(newTodo); // リストに追加
-  res.json(todos); // 更新されたリストを返す
-  console.log(todos);
+app.post('/api/todos', async (req, res) => {
+  const { title } = req.body;
+
+  try {
+    // 新しいタスクはリストの一番下に追加したいので、現在の件数をorderにします
+    const count = await prisma.todo.count();
+
+    await prisma.todo.create({
+      data: {
+        title: title,
+        order: count, // 0, 1, 2... と続くようになる
+      },
+    });
+
+    // フロントエンドが「新しいリスト全体」を期待しているため、
+    // 保存後に再度全データを取得して返します。
+    const todos = await prisma.todo.findMany({
+      orderBy: { order: 'asc' },
+    });
+    res.json(todos);
+    console.log("DBに保存し、リストを返しました");
+
+  } catch (error) {
+    console.error("保存に失敗しました:", error);
+    res.status(500).json({ error: "タスクの保存に失敗しました" });
+  }
 });
 
 // Todoの順序を更新する API (並べ替え機能用)
-// 注意: "/:id" のルートより先に定義しないと、"reorder" が id として処理されてしまう可能性がある
-app.put('/api/todos/reorder', (req, res) => {
-  const newTodos = req.body.todos; // 並べ替え後の新しい配列を受け取る
+app.put('/api/todos/reorder', async (req, res) => {
+  const newTodos = req.body.todos;
 
-  // 簡易的なバリデーション: 配列でなければエラー
   if (!Array.isArray(newTodos)) {
     return res.status(400).json({ message: "データ形式が正しくありません" });
   }
 
-  // サーバーのデータを丸ごと入れ替える
-  // (注意: `todos = newTodos` とすると const で宣言しているためエラーになるか、
-  //  参照が変わってしまってうまく動作しない場合があるため、spliceで中身を入れ替える)
-  todos.splice(0, todos.length, ...newTodos);
+  try {
+    // トランザクションで一括更新
+    // mapで「更新命令のリスト」を作り、$transactionで一度に実行します
+    const updatePromises = newTodos.map((todo, index) => {
+      return prisma.todo.update({
+        where: { id: todo.id },
+        data: { order: index }, // 配列の順番(0, 1, 2...)をそのまま保存
+      });
+    });
 
-  res.json(todos);
+    await prisma.$transaction(updatePromises);
+
+    res.json(newTodos);
+    console.log("並び順を保存しました");
+  } catch (error) {
+    console.error("並び順の保存に失敗しました", error);
+    res.status(500).json({ error: "並び順の保存に失敗しました" });
+  }
 });
 
 // Todoを削除する API
-// :id は「パスパラメータ」といって、URLの一部を変数として受け取れる
-app.delete('/api/todos/:id', (req, res) => {
-  const id = parseInt(req.params.id); // URLのid部分は文字列で来るので数値に変換
+app.delete('/api/todos/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
 
-  // 指定されたID以外のものを残す = 指定されたIDを削除
-  // filter は条件に合うものだけを残した新しい配列を作るメソッド
-  const index = todos.findIndex((todo) => todo.id === id);
-  if (index !== -1) {
-    todos.splice(index, 1);
-    res.json(todos); // 削除後のリストを返す
-    console.log(todos);
-  } else {
-    // 404 は "Not Found" (見つからない) という意味のステータスコード
-    res.status(404).json({ message: "削除しようとしたタスクが見つかりませんでした" });
+  try {
+    // 削除実行
+    await prisma.todo.delete({
+      where: { id: id },
+    });
+
+    // 削除後の最新リストを取得して返す
+    const todos = await prisma.todo.findMany({
+      orderBy: { order: 'asc' },
+    });
+    res.json(todos);
+    console.log(`ID: ${id} を削除しました`);
+
+  } catch (error) {
+    console.error("削除に失敗しました", error); // IDが存在しない場合など
+    res.status(500).json({ error: "削除に失敗しました" });
   }
 });
 
 // Todoを更新する API (編集機能用)
-app.put('/api/todos/:id', (req, res) => {
-  const id = parseInt(req.params.id); // URLのidを数値に変換
-  const { title } = req.body; // 送られてきた新しいタイトル
+app.put('/api/todos/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const { title } = req.body;
 
-  // IDに一致するTodoを探す
-  const todo = todos.find((t) => t.id === id);
+  try {
+    await prisma.todo.update({
+      where: { id: id },
+      data: { title: title },
+    });
 
-  if (todo) {
-    todo.title = title; // タイトルを更新 (参照渡しなので元の配列の中身も変わる)
-    res.json(todos); // 更新後のリスト全体を返す
-    console.log(todos);
-  } else {
-    res.status(404).json({ message: "更新しようとしたタスクが見つかりませんでした" });
+    // 最新のリストを返す
+    const todos = await prisma.todo.findMany({
+      orderBy: { order: 'asc' },
+    });
+    res.json(todos);
+  } catch (error) {
+    console.error("更新に失敗しました", error);
+    res.status(500).json({ error: "更新に失敗しました" });
   }
 });
 
