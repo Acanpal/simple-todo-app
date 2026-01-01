@@ -13,7 +13,9 @@ import {
 } from '@dnd-kit/sortable';
 
 import './App.css'
-import { SortableItem } from './SortableItem'; // 作成したコンポーネントをインポート
+import { SortableItem } from './components/SortableItem'; // 移動したコンポーネントをインポート
+import { HamburgerMenu } from './components/HamburgerMenu';
+
 
 function App() {
   const [todos, setTodos] = useState([]);
@@ -149,7 +151,9 @@ function App() {
 
   return (
     <div className="container">
+      <HamburgerMenu />
       <h1 className="title">Todo リスト</h1>
+
 
       {/* 入力フォーム */}
       <div className="form">

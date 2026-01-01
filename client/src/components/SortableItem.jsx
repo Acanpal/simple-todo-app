@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import './SortableItem.css'; // スタイルをインポート
+
 
 export function SortableItem({ todo, onUpdate, onDelete }) {
   // 編集モードの状態をこのコンポーネント内で管理する
