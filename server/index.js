@@ -31,10 +31,17 @@ app.get('/api/todos', async (req, res) => {
 app.post('/api/todos', async (req, res) => {
   const { title } = req.body;
 
-  try {
-    // 新しいタスクはリストの一番下に追加したいので、現在の件数をorderにします
-    const count = await prisma.todo.count();
+  // バリデーションチェック
+  if (!title || typeof title !== 'string' || !title.trim()) {
+    console.error("INVALID_TITLE"); // サーバー側表示用(エラーオブジェクト無し)
+    return res.status(400).json({
+      code: "INVALID_TITLE",
+      message: "タイトルが不正です"
+    });
+  }
 
+  try {
+    const count = await prisma.todo.count();
     await prisma.todo.create({
       data: {
         title: title,
@@ -42,17 +49,18 @@ app.post('/api/todos', async (req, res) => {
       },
     });
 
-    // フロントエンドが「新しいリスト全体」を期待しているため、
-    // 保存後に再度全データを取得して返します。
     const todos = await prisma.todo.findMany({
       orderBy: { order: 'asc' },
     });
     res.json(todos);
-    console.log("DBに保存し、リストを返しました");
+    console.log("DBに保存成功、新規タスクを返しました");
 
   } catch (error) {
-    console.error("保存に失敗しました:", error);
-    res.status(500).json({ error: "タスクの保存に失敗しました" });
+    console.error("TODO_CREATE_FAILED", error); // サーバー側表示用
+    res.status(500).json({ // クライアント側に返却用
+      code: "TODO_CREATE_FAILED",
+      message: "タスクの保存に失敗しました"
+    });
   }
 });
 

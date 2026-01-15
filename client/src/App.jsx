@@ -53,7 +53,11 @@ function App() {
 
   // 追加ボタンを押した時の処理
   const handleAddTodo = async () => {
-    if (!newTodo) return;
+    if (!newTodo.trim()) {
+      alert("入力してください");
+      setNewTodo(""); // 入力欄を空にする(Stateの更新)
+      return;
+    }
 
     try {
       const res = await fetch('http://localhost:3000/api/todos', {
@@ -62,16 +66,30 @@ function App() {
         body: JSON.stringify({ title: newTodo })
       });
 
-      if (!res.ok) {
-        throw new Error('サーバーにデータを保存できませんでした。');
+      const result = await res.json(); // errorも含めて返ってくる
+      if (!res.ok) { // 200番台でなければ
+        throw new Error(result.code || 'UNKNOWN_ERROR'); // errorを投げる
       }
 
-      const data = await res.json(); // 帰ってきたものをdataに格納(読み込み時間かかるのでawait)
-      setTodos(data); // 最新のリストで画面更新(Stateの更新)
+      setTodos(result); // 最新のリストで画面更新(Stateの更新)
       setNewTodo(""); // 入力欄を空にする(Stateの更新)
     } catch (err) {
       console.error(err);
-      alert("追加に失敗しました。もう一度試してください。");
+
+      // エラーメッセージの分岐
+      let message;
+      switch (err.message) {
+        case 'INVALID_TITLE':
+          message = 'タイトルが不正です';
+          break;
+        case 'TODO_CREATE_FAILED':
+          message = 'タスクの保存に失敗しました';
+          break;
+        default:
+          message = '予期せぬエラーが発生しました';
+      }
+
+      alert(message);
     }
   };
 
