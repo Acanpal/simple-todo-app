@@ -63,14 +63,13 @@ function App() {
       });
 
       if (!res.ok) {
-        throw new Error('サーバーエラーが発生しました');
+        throw new Error('サーバーにデータを保存できませんでした。');
       }
 
       const data = await res.json(); // 帰ってきたものをdataに格納(読み込み時間かかるのでawait)
       setTodos(data); // 最新のリストで画面更新(Stateの更新)
       setNewTodo(""); // 入力欄を空にする(Stateの更新)
     } catch (err) {
-      // 上の throw new Error() で投げられたエラーも キャッチする
       console.error(err);
       alert("追加に失敗しました。もう一度試してください。");
     }
@@ -86,7 +85,7 @@ function App() {
       });
 
       if (!res.ok) {
-        throw new Error('削除に失敗しました');
+        throw new Error('データを削除できませんでした。');
       }
 
       const data = await res.json();
