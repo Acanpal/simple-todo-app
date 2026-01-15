@@ -9,8 +9,6 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
-
-
 // Todoリストを返す API
 // DBから全てのTodoを取得して返します
 app.get('/api/todos', async (req, res) => {
@@ -23,7 +21,10 @@ app.get('/api/todos', async (req, res) => {
     res.json(todos);
   } catch (error) {
     console.error("取得に失敗しました", error);
-    res.status(500).json({ error: "データの取得に失敗しました" });
+    res.status(500).json({
+      code: "FAILED_TO_GET_DATA",
+      message: "DBからデータの取得に失敗しました"
+    });
   }
 });
 

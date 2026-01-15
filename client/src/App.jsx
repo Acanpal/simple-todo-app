@@ -32,18 +32,42 @@ function App() {
   );
 
 
-  // データ取得
+  // 初回表示時のデータ取得処理
   useEffect(() => {
     const fetchTodos = async () => {
       try {
         const res = await fetch('http://localhost:3000/api/todos');
-        if (!res.ok) {
-          throw new Error('データの取得に失敗しました');
+
+        let result = null;
+        try {
+          result = await res.json();
+        } catch (err) {
+          // JSONでないレスポンスも許容
         }
-        const data = await res.json();
-        setTodos(data);
+
+        if (!res.ok) {
+          throw new Error(result?.code || 'UNEXPECTED_RESPONSE');
+        }
+        setTodos(result);
       } catch (err) {
         console.error(err);
+
+        // ネットワークエラー処理
+        let code;
+        err instanceof TypeError ?
+          code = 'NETWORK_ERROR' :
+          code = err.message;
+
+        switch (code) {
+          case 'FAILED_TO_GET_DATA':
+            alert('データの取得に失敗しました');
+            break;
+          case 'NETWORK_ERROR':
+            alert('ネットワーク接続に失敗しました');
+            break;
+          default:
+            alert('サーバーから想定外の応答がありました');
+        }
       }
     };
 
@@ -54,7 +78,7 @@ function App() {
   // 追加ボタンを押した時の処理
   const handleAddTodo = async () => {
     if (!newTodo.trim()) {
-      alert("入力してください");
+      alert("文字を入力してください");
       setNewTodo(""); // 入力欄を空にする(Stateの更新)
       return;
     }
