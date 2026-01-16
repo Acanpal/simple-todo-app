@@ -15,6 +15,7 @@ import {
 import './App.css'
 import { SortableItem } from './components/SortableItem'; // 移動したコンポーネントをインポート
 import { HamburgerMenu } from './components/HamburgerMenu';
+import { apiFetch } from './utils/api';
 
 
 function App() {
@@ -36,29 +37,12 @@ function App() {
   useEffect(() => {
     const fetchTodos = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/todos');
-
-        let result = null;
-        try {
-          result = await res.json();
-        } catch (err) {
-          // JSONでないレスポンスも許容
-        }
-
-        if (!res.ok) {
-          throw new Error(result?.code || 'UNEXPECTED_RESPONSE');
-        }
+        const result = await apiFetch('http://localhost:3000/api/todos');
         setTodos(result);
       } catch (err) {
         console.error(err);
 
-        // ネットワークエラー処理
-        let code;
-        err instanceof TypeError ?
-          code = 'NETWORK_ERROR' :
-          code = err.message;
-
-        switch (code) {
+        switch (err.message) {
           case 'FAILED_TO_GET_DATA':
             alert('データの取得に失敗しました');
             break;
@@ -84,16 +68,10 @@ function App() {
     }
 
     try {
-      const res = await fetch('http://localhost:3000/api/todos', {
+      const result = await apiFetch('http://localhost:3000/api/todos', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTodo })
       });
-
-      const result = await res.json(); // errorも含めて返ってくる
-      if (!res.ok) { // 200番台でなければ
-        throw new Error(result.code || 'UNKNOWN_ERROR'); // errorを投げる
-      }
 
       setTodos(result); // 最新のリストで画面更新(Stateの更新)
       setNewTodo(""); // 入力欄を空にする(Stateの更新)
@@ -109,6 +87,9 @@ function App() {
         case 'TODO_CREATE_FAILED':
           message = 'タスクの保存に失敗しました';
           break;
+        case 'NETWORK_ERROR':
+          message = 'ネットワーク接続に失敗しました';
+          break;
         default:
           message = '予期せぬエラーが発生しました';
       }
@@ -122,16 +103,11 @@ function App() {
     if (!confirm("本当に削除しますか？")) return;
 
     try {
-      const res = await fetch(`http://localhost:3000/api/todos/${id}`, {
+      const result = await apiFetch(`http://localhost:3000/api/todos/${id}`, {
         method: 'DELETE',
       });
 
-      if (!res.ok) {
-        throw new Error('データを削除できませんでした。');
-      }
-
-      const data = await res.json();
-      setTodos(data);
+      setTodos(result);
     } catch (err) {
       console.error(err);
       alert("削除できませんでした");
@@ -142,18 +118,12 @@ function App() {
   // 引数で id と title を受け取るように変更
   const handleUpdate = async (id, newTitle) => {
     try {
-      const res = await fetch(`http://localhost:3000/api/todos/${id}`, {
+      const result = await apiFetch(`http://localhost:3000/api/todos/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: newTitle })
       });
 
-      if (!res.ok) {
-        throw new Error('更新に失敗しました');
-      }
-
-      const data = await res.json();
-      setTodos(data);
+      setTodos(result);
     } catch (err) {
       console.error(err);
       alert("更新できませんでした");
@@ -176,9 +146,8 @@ function App() {
         // サーバーに順序保存リクエスト (非同期で投げる)
         // ここでは画面更新を待たずに投げる ("Optimistic UI" 的なアプローチ)
         // 本来はエラーハンドリングをしっかりやるべき
-        fetch('http://localhost:3000/api/todos/reorder', {
+        apiFetch('http://localhost:3000/api/todos/reorder', {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ todos: newItems })
         }).catch(err => {
           console.error("順序保存に失敗しました", err);
