@@ -17,7 +17,6 @@ import { SortableItem } from './components/SortableItem'; // 移動したコン�
 import { HamburgerMenu } from './components/HamburgerMenu';
 import { apiFetch } from './utils/api';
 
-
 function App() {
   const [todos, setTodos] = useState([]);
   const [newTodo, setNewTodo] = useState("");
@@ -42,17 +41,20 @@ function App() {
       } catch (err) {
         console.error(err);
 
+        let message;
         switch (err.message) {
           case 'FAILED_TO_GET_DATA':
-            alert('データの取得に失敗しました');
+            message = 'データの取得に失敗しました';
             break;
           case 'NETWORK_ERROR':
-            alert('ネットワーク接続に失敗しました');
+            message = 'ネットワーク接続に失敗しました';
             break;
           default:
-            alert('サーバーから想定外の応答がありました');
+            message = 'サーバーから想定外の応答がありました';
         }
-      }
+
+        alert(message);
+      };
     };
 
     // 非同期処理はuseEffect内で実行するそのまま実行しないほうが良い
@@ -110,7 +112,21 @@ function App() {
       setTodos(result);
     } catch (err) {
       console.error(err);
-      alert("削除できませんでした");
+
+      // エラーメッセージの分岐
+      let message;
+      switch (err.message) {
+        case 'TODO_DELETE_FAILED':
+          message = 'タスクの削除に失敗しました';
+          break;
+        case 'NETWORK_ERROR':
+          message = 'ネットワーク接続に失敗しました';
+          break;
+        default:
+          message = '予期せぬエラーが発生しました';
+      }
+
+      alert(message);
     }
   };
 
@@ -126,37 +142,66 @@ function App() {
       setTodos(result);
     } catch (err) {
       console.error(err);
-      alert("更新できませんでした");
+
+      let message;
+      switch (err.message) {
+        case 'TODO_UPDATE_FAILED':
+          message = 'タスクの更新に失敗しました';
+          break;
+        case 'NETWORK_ERROR':
+          message = 'ネットワーク接続に失敗しました';
+          break;
+        default:
+          message = '予期せぬエラーが発生しました';
+      }
+
+      alert(message);
     }
+  };
+
+  const saveOrder = async (newItems, previousItems) => {
+    try {
+      await apiFetch('http://localhost:3000/api/todos/reorder', {
+        method: 'PUT',
+        body: JSON.stringify({ todos: newItems }),
+      });
+    } catch (err) {
+      console.error(err);
+
+      // ロールバック
+      setTodos(previousItems);
+
+      // ユーザー通知
+      switch (err.message) {
+        case 'NETWORK_ERROR':
+          alert('ネットワークエラーのため順序を保存できませんでした');
+          break;
+        case 'INVALID_PAYLOAD':
+        case 'INVALID_TODO_DATA':
+          alert('データが不正です');
+          break;
+        default:
+          alert('並び順の保存に失敗しました');
+      }
+    }
+  };
+
+  const reorderTodos = (items, activeId, overId) => {
+    const oldIndex = items.findIndex(i => i.id === activeId);
+    const newIndex = items.findIndex(i => i.id === overId);
+    return arrayMove(items, oldIndex, newIndex);
   };
 
   // ドラッグ終了時の処理
   const handleDragEnd = async (event) => { // dnd-kitのイベント
     const { active, over } = event;
+    if (!over || active.id === over.id) return; //早期リターン
 
-    if (active.id !== over.id) {
-      setTodos((items) => { // items: Reactの用意する、最新の配列
-        const oldIndex = items.findIndex(item => item.id === active.id); // 配列内の元の位置
-        const newIndex = items.findIndex(item => item.id === over.id); // 配列内の新しい位置
+    const previousItems = todos;
+    const newItems = reorderTodos(todos, active.id, over.id);
 
-        // 配列の順序を入れ替え
-        // Note: arrayMoveは新しい配列を返すので、イミュータブル性は保たれる
-        const newItems = arrayMove(items, oldIndex, newIndex);
-
-        // サーバーに順序保存リクエスト (非同期で投げる)
-        // ここでは画面更新を待たずに投げる ("Optimistic UI" 的なアプローチ)
-        // 本来はエラーハンドリングをしっかりやるべき
-        apiFetch('http://localhost:3000/api/todos/reorder', {
-          method: 'PUT',
-          body: JSON.stringify({ todos: newItems })
-        }).catch(err => {
-          console.error("順序保存に失敗しました", err);
-          // エラーなら元の順序に戻す処理などが理想的
-        });
-
-        return newItems;
-      });
-    }
+    setTodos(newItems);
+    saveOrder(newItems, previousItems);
   };
 
   return (
@@ -205,4 +250,4 @@ function App() {
   )
 }
 
-export default App
+export default App;
