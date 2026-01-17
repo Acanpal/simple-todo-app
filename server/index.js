@@ -9,8 +9,6 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
-
-
 // Todoリストを返す API
 // DBから全てのTodoを取得して返します
 app.get('/api/todos', async (req, res) => {
@@ -23,7 +21,10 @@ app.get('/api/todos', async (req, res) => {
     res.json(todos);
   } catch (error) {
     console.error("取得に失敗しました", error);
-    res.status(500).json({ error: "データの取得に失敗しました" });
+    res.status(500).json({
+      code: "FAILED_TO_GET_DATA",
+      message: "DBからデータの取得に失敗しました"
+    });
   }
 });
 
@@ -31,10 +32,17 @@ app.get('/api/todos', async (req, res) => {
 app.post('/api/todos', async (req, res) => {
   const { title } = req.body;
 
-  try {
-    // 新しいタスクはリストの一番下に追加したいので、現在の件数をorderにします
-    const count = await prisma.todo.count();
+  // バリデーションチェック
+  if (!title || typeof title !== 'string' || !title.trim()) {
+    console.error("INVALID_TITLE"); // サーバー側表示用(エラーオブジェクト無し)
+    return res.status(400).json({
+      code: "INVALID_TITLE",
+      message: "タイトルが不正です"
+    });
+  }
 
+  try {
+    const count = await prisma.todo.count();
     await prisma.todo.create({
       data: {
         title: title,
@@ -42,17 +50,18 @@ app.post('/api/todos', async (req, res) => {
       },
     });
 
-    // フロントエンドが「新しいリスト全体」を期待しているため、
-    // 保存後に再度全データを取得して返します。
     const todos = await prisma.todo.findMany({
       orderBy: { order: 'asc' },
     });
     res.json(todos);
-    console.log("DBに保存し、リストを返しました");
+    console.log("DBに保存成功、新規タスクを返しました");
 
   } catch (error) {
-    console.error("保存に失敗しました:", error);
-    res.status(500).json({ error: "タスクの保存に失敗しました" });
+    console.error("TODO_CREATE_FAILED", error); // サーバー側表示用
+    res.status(500).json({ // クライアント側に返却用
+      code: "TODO_CREATE_FAILED",
+      message: "新規タスクの保存に失敗しました"
+    });
   }
 });
 
@@ -60,27 +69,43 @@ app.post('/api/todos', async (req, res) => {
 app.put('/api/todos/reorder', async (req, res) => {
   const newTodos = req.body.todos;
 
-  if (!Array.isArray(newTodos)) {
-    return res.status(400).json({ message: "データ形式が正しくありません" });
+  if (!Array.isArray(newTodos)) { // 配列で送られてこなかったら
+    return res.status(400).json({
+      code: "INVALID_DATA",
+      message: "データ形式が正しくありません",
+    });
   }
 
   try {
     // トランザクションで一括更新
     // mapで「更新命令のリスト」を作り、$transactionで一度に実行します
     const updatePromises = newTodos.map((todo, index) => {
+
+      if (!todo.id) { // idがない場合
+        throw new Error("MISSING_TODO_ID");
+      }
       return prisma.todo.update({
         where: { id: todo.id },
         data: { order: index }, // 配列の順番(0, 1, 2...)をそのまま保存
       });
     });
-
     await prisma.$transaction(updatePromises);
 
     res.json(newTodos);
-    console.log("並び順を保存しました");
+
   } catch (error) {
     console.error("並び順の保存に失敗しました", error);
-    res.status(500).json({ error: "並び順の保存に失敗しました" });
+
+    if (error.message === "MISSING_TODO_ID") {
+      return res.status(400).json({
+        code: "MISSING_TODO_ID",
+        message: "TODOデータが不正です"
+      });
+    }
+    res.status(500).json({
+      code: "TODO_REORDER_FAILED",
+      message: "並び順の保存に失敗しました"
+    });
   }
 });
 
@@ -103,7 +128,10 @@ app.delete('/api/todos/:id', async (req, res) => {
 
   } catch (error) {
     console.error("削除に失敗しました", error); // IDが存在しない場合など
-    res.status(500).json({ error: "削除に失敗しました" });
+    res.status(500).json({ // クライアント側に返却用
+      code: "TODO_DELETE_FAILED",
+      message: "タスクの削除に失敗しました"
+    });
   }
 });
 
@@ -125,7 +153,10 @@ app.put('/api/todos/:id', async (req, res) => {
     res.json(todos);
   } catch (error) {
     console.error("更新に失敗しました", error);
-    res.status(500).json({ error: "更新に失敗しました" });
+    res.status(500).json({ // クライアント側に返却用
+      code: "TODO_UPDATE_FAILED",
+      message: "タスクの更新に失敗しました"
+    });
   }
 });
 
