@@ -135,15 +135,21 @@ app.delete('/api/todos/:id', async (req, res) => {
   }
 });
 
-// Todoを更新する API (編集機能用)
+// Todoを更新する API (編集機能用&チェックボックス用)
 app.put('/api/todos/:id', async (req, res) => {
   const id = parseInt(req.params.id);
-  const { title } = req.body;
+  const { title, completed } = req.body;
+
+  // 更新するデータを動的に作成
+  // titleが送られてきたら更新、completedが送られてきたら更新
+  const data = {};
+  if (title !== undefined) data.title = title;
+  if (completed !== undefined) data.completed = completed;
 
   try {
     await prisma.todo.update({
       where: { id: id },
-      data: { title: title },
+      data: data,
     });
 
     // 最新のリストを返す

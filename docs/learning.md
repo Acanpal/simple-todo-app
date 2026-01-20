@@ -35,3 +35,30 @@
 ## 学んだこと
 - クライアントエラーの種類は"自分で壊して"考える
 - Optimistic UI でエラーが起きたときは、ロールバックをするようにする。
+
+# 今日の学び 2026-01-20
+## 何をしたか
+- 
+ 
+## 学んだこと
+- 複数の値を更新する(その中でも送られた項目だけを更新する)APIでの以下の書き方↓
+  const data = {};
+  if (title !== undefined) data.title = title; 
+  if (completed !== undefined) data.completed = completed;
+  これにより、titleが送られてこなかった(undefined)ときに、titleを更新しないようにできる
+-
+
+## 用語
+### SPA(CSR)
+- Single Page Application
+- ページ遷移をサーバーにリクエストせず、JavaScriptで画面を書き換えることで実現するWebアプリケーション
+- 本当にhtmlは一つしかない、あくまでJSで画面を書き換えているだけ
+
+### SSR
+- Server Side Rendering
+- サーバー側でHTMLを生成して返す
+- Next.jsで実現可能
+
+### React Router
+- SPAだとしても、URLを中心に設計するためのライブラリ
+- <Route path="/completed" element={<CompletedPage />} /> でcompletedページを定義する

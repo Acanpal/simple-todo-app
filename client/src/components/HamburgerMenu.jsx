@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import './HamburgerMenu.css';
 
 export const HamburgerMenu = () => {
@@ -24,9 +25,12 @@ export const HamburgerMenu = () => {
       {/* メニューオーバーレイ */}
       <nav className={`menu-overlay ${isOpen ? 'open' : ''}`}>
         <ul className="menu-list">
-          <li className="menu-item" onClick={toggleMenu}>ホーム</li>
-          <li className="menu-item" onClick={toggleMenu}>設定</li>
-          <li className="menu-item" onClick={toggleMenu}>ログアウト</li>
+          <li className="menu-item" onClick={toggleMenu}>
+            <Link to="/uncompleted" className="menu-link">未完了タスク</Link>
+          </li>
+          <li className="menu-item" onClick={toggleMenu}>
+            <Link to="/completed" className="menu-link">完了済みタスク</Link>
+          </li>
         </ul>
       </nav>
 
