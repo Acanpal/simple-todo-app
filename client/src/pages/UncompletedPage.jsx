@@ -17,10 +17,12 @@ export const UncompletedPage = ({
   handleDelete,
   handleUpdate,
   sensors,
-  handleDragEnd
+  handleDragEnd,
+  onToggle
 }) => {
   return (
     <>
+      <h2 style={{ textAlign: 'center', margin: '20px 0' }}>未完了タスク</h2>
       <div className="form">
         <input
           type="text"
@@ -46,7 +48,7 @@ export const UncompletedPage = ({
         >
           <ul className="list">
             {todos.length === 0 ? (
-              <p style={{ textAlign: 'center', color: '#888' }}>タスクはありません</p>
+              <p className="no-tasks">タスクはありません</p>
             ) : (
               todos.map((todo) => (
                 <SortableItem
@@ -54,6 +56,7 @@ export const UncompletedPage = ({
                   todo={todo}
                   onUpdate={handleUpdate}
                   onDelete={handleDelete}
+                  onToggle={onToggle}
                 />
               ))
             )}

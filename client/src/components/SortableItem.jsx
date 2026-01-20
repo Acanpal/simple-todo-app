@@ -4,10 +4,11 @@ import { CSS } from '@dnd-kit/utilities';
 import './SortableItem.css'; // スタイルをインポート
 
 
-export function SortableItem({ todo, onUpdate, onDelete }) {
+export function SortableItem({ todo, onUpdate, onDelete, onToggle }) {
   // 編集モードの状態をこのコンポーネント内で管理する
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
+  const [isFading, setIsFading] = useState(false);
 
   const {
     attributes,
@@ -19,8 +20,8 @@ export function SortableItem({ todo, onUpdate, onDelete }) {
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: transform ? 0.5 : 1, // ドラッグ中は少し透明に(transformがある=ドラッグ中/移動中)
+    transition: transition || (isFading ? 'opacity 2000ms ease-out' : undefined),
+    opacity: isFading ? 0 : (transform ? 0.5 : 1),
   };
 
   // 編集モード開始
@@ -42,6 +43,23 @@ export function SortableItem({ todo, onUpdate, onDelete }) {
     setIsEditing(false);
   };
 
+  const handleCheckboxChange = (e) => {
+    const checked = e.target.checked;
+    if (checked && !todo.completed) {
+      // 未完了 -> 完了 (フェードアウトあり)
+      setIsFading(true);
+      setTimeout(() => {
+        onToggle(todo.id, true);
+        // setIsFading(false) はコンポーネントが移動/アンマウントされるので不要だが、
+        // 万が一のためにリセットするならここ。
+      }, 2000);
+    } else {
+      // 完了 -> 未完了 (即時) またはチェック外し
+      onToggle(todo.id, checked);
+      setIsFading(false);
+    }
+  };
+
   return (
     <div ref={setNodeRef} style={style} {...attributes} className="sortable-card">
       {/* ドラッグハンドル */}
@@ -54,6 +72,12 @@ export function SortableItem({ todo, onUpdate, onDelete }) {
           {isEditing ? (
             // 編集モード
             <>
+              <input
+                type="checkbox"
+                className="checkbox"
+                checked={todo.completed}
+                disabled
+              />
               <input
                 type="text"
                 className="edit-input"
@@ -79,6 +103,13 @@ export function SortableItem({ todo, onUpdate, onDelete }) {
           ) : (
             // 通常モード
             <>
+              <input
+                type="checkbox"
+                className="checkbox"
+                checked={todo.completed}
+                onChange={handleCheckboxChange}
+                onPointerDown={(e) => e.stopPropagation()} // ドラッグ回避
+              />
               <span
                 onClick={handleEditStart}
                 style={{ cursor: 'pointer', flexGrow: 1 }}

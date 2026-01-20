@@ -137,6 +137,20 @@ function App() {
     }
   };
 
+  // 完了状態の切り替え
+  const handleToggleCompletion = async (id, completed) => {
+    try {
+      const result = await apiFetch(`http://localhost:3000/api/todos/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ completed })
+      });
+      setTodos(result);
+    } catch (err) {
+      console.error(err);
+      alert('ステータスの更新に失敗しました');
+    }
+  };
+
   // 順序保存API呼び出し
   const saveOrder = async (newItems, previousItems) => {
     try {
@@ -203,6 +217,7 @@ function App() {
               handleAddTodo={handleAddTodo}
               handleDelete={handleDelete}
               handleUpdate={handleUpdate}
+              onToggle={handleToggleCompletion}
               sensors={sensors}
               handleDragEnd={handleDragEnd}
             />
@@ -212,6 +227,7 @@ function App() {
               todos={completedTodos}
               handleDelete={handleDelete}
               handleUpdate={handleUpdate}
+              onToggle={handleToggleCompletion}
             />
           } />
         </Route>

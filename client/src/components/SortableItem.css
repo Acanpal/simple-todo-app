@@ -98,3 +98,19 @@
   padding: 0;
   /* .item が padding を持っているのでここは0で */
 }
+
+/* チェックボックス */
+.checkbox {
+  width: 24px;
+  height: 24px;
+  margin-right: 16px;
+  cursor: pointer;
+  accent-color: #646cff;
+  /* チェック時の色をテーマカラーに合わせる */
+}
+
+/* 編集モード時の無効化されたチェックボックス */
+.checkbox:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

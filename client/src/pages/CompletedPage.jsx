@@ -1,13 +1,13 @@
 import React from 'react';
 import { SortableItem } from '../components/SortableItem';
 
-export const CompletedPage = ({ todos, handleDelete, handleUpdate }) => {
+export const CompletedPage = ({ todos, handleDelete, handleUpdate, onToggle }) => {
   return (
     <>
       <h2 style={{ textAlign: 'center', margin: '20px 0' }}>完了済みタスク</h2>
       <ul className="list">
         {todos.length === 0 ? (
-          <p style={{ textAlign: 'center', color: '#888' }}>完了したタスクはありません</p>
+          <p className="no-tasks">完了したタスクはありません</p>
         ) : (
           todos.map((todo) => (
             <SortableItem
@@ -15,7 +15,7 @@ export const CompletedPage = ({ todos, handleDelete, handleUpdate }) => {
               todo={todo}
               onUpdate={handleUpdate}
               onDelete={handleDelete}
-            // ドラッグハンドルを隠すなどの制御が後で必要になるかも
+              onToggle={onToggle}
             />
           ))
         )}
