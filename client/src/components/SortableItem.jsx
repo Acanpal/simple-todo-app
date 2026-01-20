@@ -8,7 +8,6 @@ export function SortableItem({ todo, onUpdate, onDelete, onToggle }) {
   // 編集モードの状態をこのコンポーネント内で管理する
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
-  const [isFading, setIsFading] = useState(false);
 
   const {
     attributes,
@@ -20,8 +19,8 @@ export function SortableItem({ todo, onUpdate, onDelete, onToggle }) {
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: transition || (isFading ? 'opacity 2000ms ease-out' : undefined),
-    opacity: isFading ? 0 : (transform ? 0.5 : 1),
+    transition,
+    opacity: transform ? 0.5 : 1, // ドラッグ中は少し透明に
   };
 
   // 編集モード開始
@@ -45,30 +44,18 @@ export function SortableItem({ todo, onUpdate, onDelete, onToggle }) {
 
   const handleCheckboxChange = (e) => {
     const checked = e.target.checked;
-    if (checked && !todo.completed) {
-      // 未完了 -> 完了 (フェードアウトあり)
-      setIsFading(true);
-      setTimeout(() => {
-        onToggle(todo.id, true);
-        // setIsFading(false) はコンポーネントが移動/アンマウントされるので不要だが、
-        // 万が一のためにリセットするならここ。
-      }, 2000);
-    } else {
-      // 完了 -> 未完了 (即時) またはチェック外し
-      onToggle(todo.id, checked);
-      setIsFading(false);
-    }
+    onToggle(todo.id, checked);
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} className="sortable-card">
+    <li ref={setNodeRef} style={style} {...attributes} className="sortable-card">
       {/* ドラッグハンドル */}
       <div {...listeners} className="drag-handle">
       </div>
 
       {/* コンテンツエリア */}
       <div className="sortable-content">
-        <li className="item">
+        <div className="item">
           {isEditing ? (
             // 編集モード
             <>
@@ -126,8 +113,8 @@ export function SortableItem({ todo, onUpdate, onDelete, onToggle }) {
               </button>
             </>
           )}
-        </li>
+        </div>
       </div>
-    </div>
+    </li>
   );
 }

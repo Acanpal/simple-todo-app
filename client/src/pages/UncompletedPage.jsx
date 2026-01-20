@@ -47,7 +47,7 @@ export const UncompletedPage = ({
           strategy={verticalListSortingStrategy}
         >
           <ul className="list">
-            {todos.length === 0 ? (
+            {todos.length === 0 ? ( // 例外処理
               <p className="no-tasks">タスクはありません</p>
             ) : (
               todos.map((todo) => (
