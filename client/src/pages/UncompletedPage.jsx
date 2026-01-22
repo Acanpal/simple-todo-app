@@ -33,14 +33,16 @@ export const UncompletedPage = ({
             if (e.key === 'Enter') handleAddTodo();
           }}
           placeholder="新しいタスクを入力"
+          autoFocus // ページ読み込み時に自動的にフォーカスする
         />
-        <button className="button" onClick={handleAddTodo}>追加</button>
+        <button
+          className="button" onClick={handleAddTodo} >追加</button>
       </div>
 
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
+        onDragEnd={handleDragEnd} // ドラッグ終了時に実行される関数
       >
         <SortableContext
           items={todos}

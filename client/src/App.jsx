@@ -110,7 +110,7 @@ function App() {
     }
   };
 
-  // 更新(編集)処理
+  // 更新(completedの変更、タイトル編集)処理
   const handleUpdate = async (id, newTitle) => {
     try {
       const result = await apiFetch(`http://localhost:3000/api/todos/${id}`, {
@@ -147,7 +147,19 @@ function App() {
       setTodos(result);
     } catch (err) {
       console.error(err);
-      alert('ステータスの更新に失敗しました');
+
+      let message;
+      switch (err.message) {
+        case 'TODO_UPDATE_FAILED':
+          message = 'タスクの更新に失敗しました';
+          break;
+        case 'NETWORK_ERROR':
+          message = 'ネットワーク接続に失敗しました';
+          break;
+        default:
+          message = '予期せぬエラーが発生しました';
+      }
+      alert(message);
     }
   };
 
@@ -180,25 +192,23 @@ function App() {
   // ドラッグ終了時
   const handleDragEnd = async (event) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return;
+    if (!over || active.id === over.id) return; //ドラッグ先がない、または移動先が移動元と同じなら何もしない
 
-    const previousItems = todos;
+    const previousItems = todos; // ロールバック用
 
-    // 未完了タスクだけのリストを作成して並び替えを行う
-    // 注意: 完了タスクは並び替えの影響を受けずにリストの最後にそのまま残す方針にします
-    const uncompleted = todos.filter(t => !t.completed);
-    const completed = todos.filter(t => t.completed);
+    const uncompleted = todos.filter(t => !t.completed); // 未完了のタスクのみ 抽出
+    const completed = todos.filter(t => t.completed); // 完了のタスクのみ抽出
 
-    const oldIndex = uncompleted.findIndex(i => i.id === active.id);
-    const newIndex = uncompleted.findIndex(i => i.id === over.id);
+    const oldIndex = uncompleted.findIndex(i => i.id === active.id); // 持っているidのインデックス
+    const newIndex = uncompleted.findIndex(i => i.id === over.id); // over(重なってる)idのインデックス
 
-    const reorderedUncompleted = arrayMove(uncompleted, oldIndex, newIndex);
+    const reorderedUncompleted = arrayMove(uncompleted, oldIndex, newIndex); // 未完了のタスクの並び替え
 
     // 全体を結合 (未完了の並び替え + 完了済み)
-    const newInfos = [...reorderedUncompleted, ...completed];
+    const newItems = [...reorderedUncompleted, ...completed];
 
-    setTodos(newInfos);
-    saveOrder(newInfos, previousItems);
+    setTodos(newItems); // 先にUIを更新(Optimistic UI)
+    saveOrder(newItems, previousItems); // あとからAPIを叩く
   };
 
   // フィルタリング
@@ -211,23 +221,23 @@ function App() {
         <Route path="/" element={<Layout />}>
           <Route path="uncompleted" element={
             <UncompletedPage
-              todos={uncompletedTodos}
-              newTodo={newTodo}
-              setNewTodo={setNewTodo}
-              handleAddTodo={handleAddTodo}
-              handleDelete={handleDelete}
-              handleUpdate={handleUpdate}
-              onToggle={handleToggleCompletion}
-              sensors={sensors}
-              handleDragEnd={handleDragEnd}
+              todos={uncompletedTodos} // 未完了のタスク
+              newTodo={newTodo} // 新規タスク
+              setNewTodo={setNewTodo} // 新規タスクのState更新用関数
+              handleAddTodo={handleAddTodo} // 新規タスク追加用関数
+              handleDelete={handleDelete} // タスク削除用関数
+              handleUpdate={handleUpdate} // タスク更新用関数
+              onToggle={handleToggleCompletion} // タスク完了状態更新用関数
+              sensors={sensors} // dnd-kitのセンサー設定を渡す
+              handleDragEnd={handleDragEnd} // ドラッグ終了時の処理を渡す
             />
           } />
           <Route path="completed" element={
             <CompletedPage
-              todos={completedTodos}
-              handleDelete={handleDelete}
-              handleUpdate={handleUpdate}
-              onToggle={handleToggleCompletion}
+              todos={completedTodos} // 完了のタスク
+              handleDelete={handleDelete} // タスク削除用関数
+              handleUpdate={handleUpdate} // タスク更新用関数
+              onToggle={handleToggleCompletion} // タスク完了状態更新用関数
             />
           } />
         </Route>
