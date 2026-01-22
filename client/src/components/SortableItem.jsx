@@ -4,7 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import './SortableItem.css'; // スタイルをインポート
 
 
-export function SortableItem({ todo, onUpdate, onDelete }) {
+export function SortableItem({ todo, onUpdate, onDelete, onToggle }) {
   // 編集モードの状態をこのコンポーネント内で管理する
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
@@ -20,7 +20,7 @@ export function SortableItem({ todo, onUpdate, onDelete }) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: transform ? 0.5 : 1, // ドラッグ中は少し透明に(transformがある=ドラッグ中/移動中)
+    opacity: transform ? 0.5 : 1, // ドラッグ中は少し透明に
   };
 
   // 編集モード開始
@@ -42,18 +42,29 @@ export function SortableItem({ todo, onUpdate, onDelete }) {
     setIsEditing(false);
   };
 
+  const handleCheckboxChange = (e) => {
+    const checked = e.target.checked;
+    onToggle(todo.id, checked);
+  };
+
   return (
-    <div ref={setNodeRef} style={style} {...attributes} className="sortable-card">
+    <li ref={setNodeRef} style={style} {...attributes} className="sortable-card">
       {/* ドラッグハンドル */}
       <div {...listeners} className="drag-handle">
       </div>
 
       {/* コンテンツエリア */}
       <div className="sortable-content">
-        <li className="item">
+        <div className="item">
           {isEditing ? (
             // 編集モード
             <>
+              <input
+                type="checkbox"
+                className="checkbox"
+                checked={todo.completed}
+                disabled
+              />
               <input
                 type="text"
                 className="edit-input"
@@ -79,6 +90,13 @@ export function SortableItem({ todo, onUpdate, onDelete }) {
           ) : (
             // 通常モード
             <>
+              <input
+                type="checkbox"
+                className="checkbox"
+                checked={todo.completed}
+                onChange={handleCheckboxChange}
+                onPointerDown={(e) => e.stopPropagation()} // ドラッグ回避
+              />
               <span
                 onClick={handleEditStart}
                 style={{ cursor: 'pointer', flexGrow: 1 }}
@@ -95,8 +113,8 @@ export function SortableItem({ todo, onUpdate, onDelete }) {
               </button>
             </>
           )}
-        </li>
+        </div>
       </div>
-    </div>
+    </li>
   );
 }

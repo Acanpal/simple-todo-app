@@ -1,20 +1,18 @@
 import { useState, useEffect } from 'react'
 import {
-  DndContext,
-  closestCenter,
   PointerSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
 import {
   arrayMove,
-  SortableContext,
-  verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import './App.css'
-import { SortableItem } from './components/SortableItem'; // 移動したコンポーネントをインポート
-import { HamburgerMenu } from './components/HamburgerMenu';
+import { Layout } from './components/Layout';
+import { UncompletedPage } from './pages/UncompletedPage';
+import { CompletedPage } from './pages/CompletedPage';
 import { apiFetch } from './utils/api';
 
 function App() {
@@ -22,15 +20,13 @@ function App() {
   const [newTodo, setNewTodo] = useState("");
 
   // dnd-kitのセンサー設定
-  // PointerSensor (マウス/タッチ)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5, // 5px以上ドラッグしたら開始 (クリックと区別するため)
+        distance: 5,
       },
     }),
   );
-
 
   // 初回表示時のデータ取得処理
   useEffect(() => {
@@ -40,7 +36,6 @@ function App() {
         setTodos(result);
       } catch (err) {
         console.error(err);
-
         let message;
         switch (err.message) {
           case 'FAILED_TO_GET_DATA':
@@ -52,20 +47,17 @@ function App() {
           default:
             message = 'サーバーから想定外の応答がありました';
         }
-
         alert(message);
       };
     };
-
-    // 非同期処理はuseEffect内で実行するそのまま実行しないほうが良い
     fetchTodos();
   }, []);
 
-  // 追加ボタンを押した時の処理
+  // 追加ボタン処理
   const handleAddTodo = async () => {
     if (!newTodo.trim()) {
       alert("文字を入力してください");
-      setNewTodo(""); // 入力欄を空にする(Stateの更新)
+      setNewTodo("");
       return;
     }
 
@@ -75,40 +67,28 @@ function App() {
         body: JSON.stringify({ title: newTodo })
       });
 
-      setTodos(result); // 最新のリストで画面更新(Stateの更新)
-      setNewTodo(""); // 入力欄を空にする(Stateの更新)
+      setTodos(result);
+      setNewTodo("");
     } catch (err) {
       console.error(err);
-
-      // エラーメッセージの分岐
       let message;
       switch (err.message) {
-        case 'INVALID_TITLE':
-          message = 'タイトルが不正です';
-          break;
-        case 'TODO_CREATE_FAILED':
-          message = 'タスクの保存に失敗しました';
-          break;
-        case 'NETWORK_ERROR':
-          message = 'ネットワーク接続に失敗しました';
-          break;
-        default:
-          message = '予期せぬエラーが発生しました';
+        case 'INVALID_TITLE': message = 'タイトルが不正です'; break;
+        case 'TODO_CREATE_FAILED': message = 'タスクの保存に失敗しました'; break;
+        case 'NETWORK_ERROR': message = 'ネットワーク接続に失敗しました'; break;
+        default: message = '予期せぬエラーが発生しました';
       }
-
       alert(message);
     }
   };
 
-  // 削除ボタンを押した時の処理
+  // 削除ボタン処理
   const handleDelete = async (id) => {
     if (!confirm("本当に削除しますか？")) return;
-
     try {
       const result = await apiFetch(`http://localhost:3000/api/todos/${id}`, {
         method: 'DELETE',
       });
-
       setTodos(result);
     } catch (err) {
       console.error(err);
@@ -130,15 +110,13 @@ function App() {
     }
   };
 
-  // 更新(保存)ボタン処理
-  // 引数で id と title を受け取るように変更
+  // 更新(completedの変更、タイトル編集)処理
   const handleUpdate = async (id, newTitle) => {
     try {
       const result = await apiFetch(`http://localhost:3000/api/todos/${id}`, {
         method: 'PUT',
         body: JSON.stringify({ title: newTitle })
       });
-
       setTodos(result);
     } catch (err) {
       console.error(err);
@@ -159,6 +137,33 @@ function App() {
     }
   };
 
+  // 完了状態の切り替え
+  const handleToggleCompletion = async (id, completed) => {
+    try {
+      const result = await apiFetch(`http://localhost:3000/api/todos/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ completed })
+      });
+      setTodos(result);
+    } catch (err) {
+      console.error(err);
+
+      let message;
+      switch (err.message) {
+        case 'TODO_UPDATE_FAILED':
+          message = 'タスクの更新に失敗しました';
+          break;
+        case 'NETWORK_ERROR':
+          message = 'ネットワーク接続に失敗しました';
+          break;
+        default:
+          message = '予期せぬエラーが発生しました';
+      }
+      alert(message);
+    }
+  };
+
+  // 順序保存API呼び出し
   const saveOrder = async (newItems, previousItems) => {
     try {
       await apiFetch('http://localhost:3000/api/todos/reorder', {
@@ -167,8 +172,6 @@ function App() {
       });
     } catch (err) {
       console.error(err);
-
-      // ロールバック
       setTodos(previousItems);
 
       // ユーザー通知
@@ -186,67 +189,60 @@ function App() {
     }
   };
 
-  const reorderTodos = (items, activeId, overId) => {
-    const oldIndex = items.findIndex(i => i.id === activeId);
-    const newIndex = items.findIndex(i => i.id === overId);
-    return arrayMove(items, oldIndex, newIndex);
-  };
-
-  // ドラッグ終了時の処理
-  const handleDragEnd = async (event) => { // dnd-kitのイベント
+  // ドラッグ終了時
+  const handleDragEnd = async (event) => {
     const { active, over } = event;
-    if (!over || active.id === over.id) return; //早期リターン
+    if (!over || active.id === over.id) return; //ドラッグ先がない、または移動先が移動元と同じなら何もしない
 
-    const previousItems = todos;
-    const newItems = reorderTodos(todos, active.id, over.id);
+    const previousItems = todos; // ロールバック用
 
-    setTodos(newItems);
-    saveOrder(newItems, previousItems);
+    const uncompleted = todos.filter(t => !t.completed); // 未完了のタスクのみ 抽出
+    const completed = todos.filter(t => t.completed); // 完了のタスクのみ抽出
+
+    const oldIndex = uncompleted.findIndex(i => i.id === active.id); // 持っているidのインデックス
+    const newIndex = uncompleted.findIndex(i => i.id === over.id); // over(重なってる)idのインデックス
+
+    const reorderedUncompleted = arrayMove(uncompleted, oldIndex, newIndex); // 未完了のタスクの並び替え
+
+    // 全体を結合 (未完了の並び替え + 完了済み)
+    const newItems = [...reorderedUncompleted, ...completed];
+
+    setTodos(newItems); // 先にUIを更新(Optimistic UI)
+    saveOrder(newItems, previousItems); // あとからAPIを叩く
   };
+
+  // フィルタリング
+  const uncompletedTodos = todos.filter(todo => !todo.completed);
+  const completedTodos = todos.filter(todo => todo.completed);
 
   return (
-    <div className="container">
-      <HamburgerMenu />
-      <h1 className="title">Todo リスト</h1>
-
-
-      {/* 入力フォーム */}
-      <div className="form">
-        <input
-          type="text"
-          className="input"
-          value={newTodo}
-          onChange={(e) => setNewTodo(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleAddTodo();
-          }}
-          placeholder="新しいタスクを入力"
-        />
-        <button className="button" onClick={handleAddTodo}>追加</button>
-      </div>
-
-      <DndContext
-        sensors={sensors} // さっき設定したセンサーを使う
-        collisionDetection={closestCenter} // 中心が一番近い要素と置き換える
-        onDragEnd={handleDragEnd} // ドラッグ終了時の処理
-      >
-        <SortableContext
-          items={todos} // 並び替え対象のリスト
-          strategy={verticalListSortingStrategy} // 垂直方向の並び替え 
-        >
-          <ul className="list">
-            {todos.map((todo) => (
-              <SortableItem
-                key={todo.id}
-                todo={todo}
-                onUpdate={handleUpdate}
-                onDelete={handleDelete}
-              />
-            ))}
-          </ul>
-        </SortableContext>
-      </DndContext>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route path="uncompleted" element={
+            <UncompletedPage
+              todos={uncompletedTodos} // 未完了のタスク
+              newTodo={newTodo} // 新規タスク
+              setNewTodo={setNewTodo} // 新規タスクのState更新用関数
+              handleAddTodo={handleAddTodo} // 新規タスク追加用関数
+              handleDelete={handleDelete} // タスク削除用関数
+              handleUpdate={handleUpdate} // タスク更新用関数
+              onToggle={handleToggleCompletion} // タスク完了状態更新用関数
+              sensors={sensors} // dnd-kitのセンサー設定を渡す
+              handleDragEnd={handleDragEnd} // ドラッグ終了時の処理を渡す
+            />
+          } />
+          <Route path="completed" element={
+            <CompletedPage
+              todos={completedTodos} // 完了のタスク
+              handleDelete={handleDelete} // タスク削除用関数
+              handleUpdate={handleUpdate} // タスク更新用関数
+              onToggle={handleToggleCompletion} // タスク完了状態更新用関数
+            />
+          } />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   )
 }
 

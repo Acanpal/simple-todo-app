@@ -67,3 +67,11 @@
   padding: 0;
   text-align: left;
 }
+
+/* タスクなしメッセージ */
+.no-tasks {
+  text-align: center;
+  color: #888;
+  font-size: 1.1em;
+  padding: 2rem 0;
+}
