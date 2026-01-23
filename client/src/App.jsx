@@ -13,7 +13,8 @@ import './App.css'
 import { Layout } from './components/Layout';
 import { UncompletedPage } from './pages/UncompletedPage';
 import { CompletedPage } from './pages/CompletedPage';
-import { apiFetch } from './utils/api';
+import { apiFetch } from './api/apiFetch';
+import { errorMessage } from './utils/errorMessage';
 
 function App() {
   const [todos, setTodos] = useState([]);
@@ -32,22 +33,11 @@ function App() {
   useEffect(() => {
     const fetchTodos = async () => {
       try {
-        const result = await apiFetch('http://localhost:3000/api/todos');
-        setTodos(result);
+        const res = await apiFetch('http://localhost:3000/api/todos');
+        setTodos(res);
       } catch (err) {
         console.error(err);
-        let message;
-        switch (err.message) {
-          case 'FAILED_TO_GET_DATA':
-            message = 'データの取得に失敗しました';
-            break;
-          case 'NETWORK_ERROR':
-            message = 'ネットワーク接続に失敗しました';
-            break;
-          default:
-            message = 'サーバーから想定外の応答がありました';
-        }
-        alert(message);
+        alert(errorMessage(err.code));
       };
     };
     fetchTodos();
@@ -62,104 +52,57 @@ function App() {
     }
 
     try {
-      const result = await apiFetch('http://localhost:3000/api/todos', {
+      const res = await apiFetch('http://localhost:3000/api/todos', {
         method: 'POST',
         body: JSON.stringify({ title: newTodo })
       });
 
-      setTodos(result);
+      setTodos(res);
       setNewTodo("");
     } catch (err) {
       console.error(err);
-      let message;
-      switch (err.message) {
-        case 'INVALID_TITLE': message = 'タイトルが不正です'; break;
-        case 'TODO_CREATE_FAILED': message = 'タスクの保存に失敗しました'; break;
-        case 'NETWORK_ERROR': message = 'ネットワーク接続に失敗しました'; break;
-        default: message = '予期せぬエラーが発生しました';
-      }
-      alert(message);
+      alert(errorMessage(err.code));
     }
-  };
-
+  }
   // 削除ボタン処理
   const handleDelete = async (id) => {
     if (!confirm("本当に削除しますか？")) return;
     try {
-      const result = await apiFetch(`http://localhost:3000/api/todos/${id}`, {
+      const res = await apiFetch(`http://localhost:3000/api/todos/${id}`, {
         method: 'DELETE',
       });
-      setTodos(result);
+      setTodos(res);
     } catch (err) {
       console.error(err);
-
-      // エラーメッセージの分岐
-      let message;
-      switch (err.message) {
-        case 'TODO_DELETE_FAILED':
-          message = 'タスクの削除に失敗しました';
-          break;
-        case 'NETWORK_ERROR':
-          message = 'ネットワーク接続に失敗しました';
-          break;
-        default:
-          message = '予期せぬエラーが発生しました';
-      }
-
-      alert(message);
+      alert(errorMessage(err.code));
     }
   };
 
-  // 更新(completedの変更、タイトル編集)処理
+  // 更新(タイトル編集)処理
   const handleUpdate = async (id, newTitle) => {
     try {
-      const result = await apiFetch(`http://localhost:3000/api/todos/${id}`, {
+      const res = await apiFetch(`http://localhost:3000/api/todos/${id}`, {
         method: 'PUT',
         body: JSON.stringify({ title: newTitle })
       });
-      setTodos(result);
+      setTodos(res);
     } catch (err) {
       console.error(err);
-
-      let message;
-      switch (err.message) {
-        case 'TODO_UPDATE_FAILED':
-          message = 'タスクの更新に失敗しました';
-          break;
-        case 'NETWORK_ERROR':
-          message = 'ネットワーク接続に失敗しました';
-          break;
-        default:
-          message = '予期せぬエラーが発生しました';
-      }
-
-      alert(message);
+      alert(errorMessage(err.code));
     }
   };
 
   // 完了状態の切り替え
   const handleToggleCompletion = async (id, completed) => {
     try {
-      const result = await apiFetch(`http://localhost:3000/api/todos/${id}`, {
+      const res = await apiFetch(`http://localhost:3000/api/todos/${id}`, {
         method: 'PUT',
         body: JSON.stringify({ completed })
       });
-      setTodos(result);
+      setTodos(res);
     } catch (err) {
       console.error(err);
-
-      let message;
-      switch (err.message) {
-        case 'TODO_UPDATE_FAILED':
-          message = 'タスクの更新に失敗しました';
-          break;
-        case 'NETWORK_ERROR':
-          message = 'ネットワーク接続に失敗しました';
-          break;
-        default:
-          message = '予期せぬエラーが発生しました';
-      }
-      alert(message);
+      alert(errorMessage(err.code));
     }
   };
 
@@ -172,20 +115,8 @@ function App() {
       });
     } catch (err) {
       console.error(err);
-      setTodos(previousItems);
-
-      // ユーザー通知
-      switch (err.message) {
-        case 'NETWORK_ERROR':
-          alert('ネットワークエラーのため順序を保存できませんでした');
-          break;
-        case 'INVALID_PAYLOAD':
-        case 'INVALID_TODO_DATA':
-          alert('データが不正です');
-          break;
-        default:
-          alert('並び順の保存に失敗しました');
-      }
+      setTodos(previousItems); // ロールバック
+      alert(errorMessage(err.code));
     }
   };
 

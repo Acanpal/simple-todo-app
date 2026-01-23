@@ -20,8 +20,8 @@ app.get('/api/todos', async (req, res) => {
     });
     res.json(todos);
   } catch (error) {
-    console.error("取得に失敗しました", error);
-    res.status(500).json({
+    console.error("DBからデータの取得に失敗しました", error); // サーバー側だからstatusなどはいらない？
+    res.status(500).json({ // エラーオブジェクトではなく、ただのjson返す
       code: "FAILED_TO_GET_DATA",
       message: "DBからデータの取得に失敗しました"
     });
@@ -34,7 +34,7 @@ app.post('/api/todos', async (req, res) => {
 
   // バリデーションチェック
   if (!title || typeof title !== 'string' || !title.trim()) {
-    console.error("INVALID_TITLE"); // サーバー側表示用(エラーオブジェクト無し)
+    console.error("INVALID_TITLE", error); // サーバー側表示用
     return res.status(400).json({
       code: "INVALID_TITLE",
       message: "タイトルが不正です"
