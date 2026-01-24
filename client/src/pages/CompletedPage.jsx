@@ -1,5 +1,5 @@
 import React from 'react';
-import { SortableItem } from '../components/SortableItem';
+import { SortableTodoItem } from '../components/SortableTodoItem';
 
 export const CompletedPage = ({ todos, handleDelete, handleUpdate, onToggle }) => {
   return (
@@ -10,7 +10,7 @@ export const CompletedPage = ({ todos, handleDelete, handleUpdate, onToggle }) =
           <p className="no-tasks">完了したタスクはありません</p>
         ) : (
           todos.map((todo) => (
-            <SortableItem
+            <SortableTodoItem
               key={todo.id}
               todo={todo}
               onUpdate={handleUpdate}

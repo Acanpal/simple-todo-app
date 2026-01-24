@@ -1,43 +1,53 @@
-import React from 'react';
+import { useState } from 'react';
+
 import {
   DndContext,
   closestCenter,
+  useSensors,
+  useSensor,
+  PointerSensor,
 } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { SortableItem } from '../components/SortableItem';
+
+import { SortableTodoItem } from '../components/SortableTodoItem';
+import { TodoInput } from '../components/TodoInput';
 
 export const UncompletedPage = ({
   todos,
-  newTodo,
-  setNewTodo,
   handleAddTodo,
   handleDelete,
   handleUpdate,
-  sensors,
   handleDragEnd,
   onToggle
 }) => {
+  const [newTodo, setNewTodo] = useState('');
+
+  // dnd-kitのセンサー設定
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+  );
+
+  // handleAddTodoを呼び出し、newTodoを渡すためのラッパー
+  const onAdd = () => {
+    handleAddTodo(newTodo);
+    setNewTodo('');
+  };
+
   return (
     <>
       <h2 style={{ textAlign: 'center', margin: '20px 0' }}>未完了タスク</h2>
-      <div className="form">
-        <input
-          type="text"
-          className="input"
-          value={newTodo}
-          onChange={(e) => setNewTodo(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleAddTodo();
-          }}
-          placeholder="新しいタスクを入力"
-          autoFocus // ページ読み込み時に自動的にフォーカスする
-        />
-        <button
-          className="button" onClick={handleAddTodo} >追加</button>
-      </div>
+      <TodoInput
+        value={newTodo}
+        onChange={setNewTodo}
+        onAdd={onAdd}
+      />
 
       <DndContext
         sensors={sensors}
@@ -53,7 +63,7 @@ export const UncompletedPage = ({
               <p className="no-tasks">タスクはありません</p>
             ) : (
               todos.map((todo) => (
-                <SortableItem
+                <SortableTodoItem
                   key={todo.id}
                   todo={todo}
                   onUpdate={handleUpdate}
