@@ -8,6 +8,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { SortableItem } from '../components/SortableItem';
+import { TodoInput } from '../components/TodoInput';
 
 export const UncompletedPage = ({
   todos,
@@ -23,21 +24,11 @@ export const UncompletedPage = ({
   return (
     <>
       <h2 style={{ textAlign: 'center', margin: '20px 0' }}>未完了タスク</h2>
-      <div className="form">
-        <input
-          type="text"
-          className="input"
-          value={newTodo}
-          onChange={(e) => setNewTodo(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') handleAddTodo();
-          }}
-          placeholder="新しいタスクを入力"
-          autoFocus // ページ読み込み時に自動的にフォーカスする
-        />
-        <button
-          className="button" onClick={handleAddTodo} >追加</button>
-      </div>
+      <TodoInput
+        value={newTodo}
+        onChange={setNewTodo}
+        onAdd={handleAddTodo}
+      />
 
       <DndContext
         sensors={sensors}
