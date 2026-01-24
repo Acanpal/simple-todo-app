@@ -4,7 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import './SortableTodoItem.css'; // スタイルをインポート
 
 
-export function SortableItem({ todo, onUpdate, onDelete, onToggle }) {
+export function SortableTodoItem({ todo, onUpdate, onDelete, onToggle }) {
   // 編集モードの状態をこのコンポーネント内で管理する
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");

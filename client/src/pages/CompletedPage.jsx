@@ -10,7 +10,7 @@ export const CompletedPage = ({ todos, handleDelete, handleUpdate, onToggle }) =
           <p className="no-tasks">完了したタスクはありません</p>
         ) : (
           todos.map((todo) => (
-            <SortableItem
+            <SortableTodoItem
               key={todo.id}
               todo={todo}
               onUpdate={handleUpdate}
