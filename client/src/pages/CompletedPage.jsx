@@ -1,5 +1,5 @@
 import React from 'react';
-import { SortableItem } from '../components/SortableItem';
+import { SortableTodoItem } from '../components/SortableTodoItem';
 
 export const CompletedPage = ({ todos, handleDelete, handleUpdate, onToggle }) => {
   return (

@@ -1,13 +1,18 @@
 import { useState } from 'react';
+
 import {
   DndContext,
   closestCenter,
+  useSensors,
+  useSensor,
+  PointerSensor,
 } from '@dnd-kit/core';
 import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { SortableItem } from '../components/SortableItem';
+
+import { SortableTodoItem } from '../components/SortableTodoItem';
 import { TodoInput } from '../components/TodoInput';
 
 export const UncompletedPage = ({
@@ -15,11 +20,19 @@ export const UncompletedPage = ({
   handleAddTodo,
   handleDelete,
   handleUpdate,
-  sensors,
   handleDragEnd,
   onToggle
 }) => {
   const [newTodo, setNewTodo] = useState('');
+
+  // dnd-kitのセンサー設定
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+  );
 
   // handleAddTodoを呼び出し、newTodoを渡すためのラッパー
   const onAdd = () => {
@@ -50,7 +63,7 @@ export const UncompletedPage = ({
               <p className="no-tasks">タスクはありません</p>
             ) : (
               todos.map((todo) => (
-                <SortableItem
+                <SortableTodoItem
                   key={todo.id}
                   todo={todo}
                   onUpdate={handleUpdate}

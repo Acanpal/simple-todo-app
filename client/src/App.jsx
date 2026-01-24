@@ -1,8 +1,3 @@
-import {
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import './App.css'
@@ -13,22 +8,14 @@ import { useTodos } from './hooks/useTodos';
 
 function App() {
   const {
-    todos,
+    uncompletedTodos,
+    completedTodos,
     addTodo,
     deleteTodo,
     updateTodo,
     toggleTodoCompletion,
     reorderTodos,
   } = useTodos();
-
-  // dnd-kitのセンサー設定
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 5,
-      },
-    }),
-  );
 
   // active.idとover.idを渡すラッパー
   const handleDragEnd = (event) => {
@@ -37,10 +24,6 @@ function App() {
       reorderTodos(active.id, over.id);
     }
   };
-
-  // フィルタリング (毎レンダリングごとに行う)
-  const uncompletedTodos = todos.filter(todo => !todo.completed);
-  const completedTodos = todos.filter(todo => todo.completed);
 
   return (
     <BrowserRouter>
@@ -53,7 +36,6 @@ function App() {
               handleDelete={deleteTodo} // タスク削除用関数
               handleUpdate={updateTodo} // タスク更新用関数
               onToggle={toggleTodoCompletion} // タスク完了状態更新用関数
-              sensors={sensors} // dnd-kitのセンサー設定を渡す
               handleDragEnd={handleDragEnd} // ドラッグ終了時の処理を渡す
             />
           } />

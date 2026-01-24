@@ -113,12 +113,17 @@ export const useTodos = () => {
     saveOrder(newItems, previousItems);
   };
 
+  // フィルタリング
+  const uncompletedTodos = todos.filter(todo => !todo.completed);
+  const completedTodos = todos.filter(todo => todo.completed);
+
   return {
-    todos,
+    uncompletedTodos,
+    completedTodos,
     addTodo,
     deleteTodo,
-    updateTodo, // handleUpdate
-    toggleTodoCompletion, // handleToggleCompletion
-    reorderTodos, // handleDragEnd
+    updateTodo,
+    toggleTodoCompletion,
+    reorderTodos,
   };
 };
