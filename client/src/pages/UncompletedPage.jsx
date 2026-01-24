@@ -1,4 +1,4 @@
-import React from 'react';
+import { useState } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -12,8 +12,6 @@ import { TodoInput } from '../components/TodoInput';
 
 export const UncompletedPage = ({
   todos,
-  newTodo,
-  setNewTodo,
   handleAddTodo,
   handleDelete,
   handleUpdate,
@@ -21,13 +19,21 @@ export const UncompletedPage = ({
   handleDragEnd,
   onToggle
 }) => {
+  const [newTodo, setNewTodo] = useState('');
+
+  // handleAddTodoを呼び出し、newTodoを渡すためのラッパー
+  const onAdd = () => {
+    handleAddTodo(newTodo);
+    setNewTodo('');
+  };
+
   return (
     <>
       <h2 style={{ textAlign: 'center', margin: '20px 0' }}>未完了タスク</h2>
       <TodoInput
         value={newTodo}
         onChange={setNewTodo}
-        onAdd={handleAddTodo}
+        onAdd={onAdd}
       />
 
       <DndContext
