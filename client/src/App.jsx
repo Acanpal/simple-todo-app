@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import './App.css'
 import { Layout } from './components/Layout';
@@ -29,6 +29,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
+          <Route index element={<Navigate to="uncompleted" replace />} /> {/* 未完了タスクページにリダイレクト */}
           <Route path="uncompleted" element={
             <UncompletedPage
               todos={uncompletedTodos} // 未完了のタスク
