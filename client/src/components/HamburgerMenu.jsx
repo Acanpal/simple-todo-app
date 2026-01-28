@@ -25,11 +25,11 @@ export const HamburgerMenu = () => {
       {/* メニューオーバーレイ */}
       <nav className={`menu-overlay ${isOpen ? 'open' : ''}`}>
         <ul className="menu-list">
-          <li className="menu-item" onClick={toggleMenu}>
-            <Link to="/uncompleted" className="menu-link">未完了タスク</Link>
+          <li className="menu-item">
+            <Link to="/uncompleted" className="menu-link" onClick={toggleMenu}>未完了タスク</Link>
           </li>
-          <li className="menu-item" onClick={toggleMenu}>
-            <Link to="/completed" className="menu-link">完了済みタスク</Link>
+          <li className="menu-item">
+            <Link to="/completed" className="menu-link" onClick={toggleMenu}>完了済みタスク</Link>
           </li>
         </ul>
       </nav>
