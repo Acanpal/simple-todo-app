@@ -11,10 +11,11 @@ app.use(cors());
 app.use(express.json());
 
 // ルーティングの設定
+const authMiddleware = require('./middleware/auth'); // ミドルウェアの読み込み
 // /api/auth から始まるURLは authRoutes で処理する
 app.use('/api/auth', authRoutes);
-// /api/todos から始まるURLは todoRoutes で処理する
-app.use('/api/todos', todoRoutes);
+// /api/todos から始まるURLは authMiddleware でチェックしてから todoRoutes で処理する
+app.use('/api/todos', authMiddleware, todoRoutes);
 
 // サーバーを起動
 app.listen(PORT, () => {
