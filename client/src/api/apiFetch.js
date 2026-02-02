@@ -5,10 +5,14 @@ export async function apiFetch(url, options = {}) { // optionsはオプション
 
   let res = null;
   try { // そもそもネットワーク接続できていない
+    const token = localStorage.getItem('token');
+    const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+
     res = await fetch(url, {
       ...rest,
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
         ...headers,
       },
     });

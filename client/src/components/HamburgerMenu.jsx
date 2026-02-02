@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import './HamburgerMenu.css';
 
 export const HamburgerMenu = () => {
@@ -7,6 +8,15 @@ export const HamburgerMenu = () => {
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const { logout } = useAuth(); // AuthContextからlogout関数を取得
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    setIsOpen(false);
+    navigate('/login');
   };
 
   return (
@@ -30,6 +40,17 @@ export const HamburgerMenu = () => {
           </li>
           <li className="menu-item">
             <Link to="/completed" className="menu-link" onClick={toggleMenu}>完了済みタスク</Link>
+          </li>
+          {/* 区切り線 */}
+          <hr style={{ width: '80%', borderColor: '#444', margin: '20px auto' }} />
+          <li className="menu-item">
+            <button
+              className="menu-link"
+              onClick={handleLogout}
+              style={{ background: 'transparent', border: 'none', color: '#ff6b6b', cursor: 'pointer', fontSize: 'inherit' }}
+            >
+              ログアウト
+            </button>
           </li>
         </ul>
       </nav>
