@@ -3,16 +3,31 @@ datasource db {
   provider = "sqlite"
   url      = "file:./dev.db"
 }
+
 // Prismaクライアント(操作用コード)の生成設定
 generator client {
   provider = "prisma-client-js"
 }
+
 // データモデルの定義
+
+// ユーザー (New)
+model User {
+  id       Int    @id @default(autoincrement())
+  email    String @unique
+  password String // ハッシュ化されたパスワード
+  todos    Todo[] // Userは複数のTodoを持つ
+}
+
 model Todo {
   id        Int      @id @default(autoincrement()) // 自動で増えるID (1, 2, 3...)
   title     String   // Todoの内容
-  completed Boolean  @default(false) // 完了状態 (推奨追加)
-  order     Int      @default(0)     // 並び順 (Reorder機能用)
+  completed Boolean  @default(false) // 完了状態
+  order     Int      @default(0)     // 並び順
   createdAt DateTime @default(now()) // 作成日時
   updatedAt DateTime @updatedAt      // 更新日時
+
+  // Userとの関連付け (New)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
 }
