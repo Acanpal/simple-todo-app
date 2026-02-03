@@ -1,22 +1,20 @@
-const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { validationResult } = require('express-validator');
+const prisma = require('../config/db');
 
-const prisma = new PrismaClient();
-
-// JWTの秘密鍵 (本来は .env に書くべきですが、学習用としてここに記載するか、.env利用を推奨)
-// .envが使える場合は process.env.JWT_SECRET を使用
-const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key_for_dev';
+// JWTの秘密鍵
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // 新規登録
 exports.register = async (req, res) => {
   try {
-    const { email, password } = req.body;
-
-    // バリデーション: 入力が空でないか
-    if (!email || !password) {
-      return res.status(400).json({ error: 'メールアドレスとパスワードは必須です' });
+    // ヴァリデーションエラー
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
+    const { email, password } = req.body;
 
     // 既存ユーザーチェック
     const existingUser = await prisma.user.findUnique({
@@ -48,6 +46,12 @@ exports.register = async (req, res) => {
   }
 };
 
+// 既存ユーザーチェック(デバッグ用)
+exports.checkUser = async (req, res) => {
+  const todo = await prisma.user.findMany();
+  res.json(todo);
+};
+
 // ログイン
 exports.login = async (req, res) => {
   try {
@@ -69,11 +73,15 @@ exports.login = async (req, res) => {
 
     // トークン (JWT) の発行
     // 誰か？(userId) と、いつまで有効か？(expiresIn) を含める
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
-      expiresIn: '1h', // 1時間で期限切れ
+    const token = jwt.sign(
+      { userId: user.id }, // JWTに含めたい情報(PayLoad)
+      JWT_SECRET, // 秘密鍵
+      { expiresIn: '1h' } // Option
+    );
+    res.json({
+      message: 'ログイン成功',
+      token: token,
     });
-
-    res.json({ message: 'ログイン成功', token });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({
