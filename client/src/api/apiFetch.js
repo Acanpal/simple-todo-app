@@ -5,10 +5,17 @@ export async function apiFetch(url, options = {}) { // optionsはオプション
 
   let res = null;
   try { // そもそもネットワーク接続できていない
+
+    // トークンを取得
+    const token = localStorage.getItem('token');
+    // トークンがあればヘッダーに追加
+    const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {};
+
     res = await fetch(url, {
       ...rest,
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
         ...headers,
       },
     });
@@ -43,12 +50,43 @@ export async function apiFetch(url, options = {}) { // optionsはオプション
   }
 
   if (!res.ok) { //httpステータスコードが200番台でない
-    throw new ApiError({
-      code: result.code ?? 'UNKNOWN_ERROR',
-      message: result.message ?? '予期せぬエラーが発生しました',
-      status: res.status ?? null,
-      cause: null,
-    });
+    switch (res.status) {
+      case 401:
+        throw new ApiError({
+          code: 'UNAUTHORIZED',
+          message: res.message,
+          status: 401,
+          cause: null,
+        });
+      case 403:
+        throw new ApiError({
+          code: 'FORBIDDEN',
+          message: res.message,
+          status: 403,
+          cause: null,
+        });
+      case 404:
+        throw new ApiError({
+          code: 'NOT_FOUND',
+          message: res.message,
+          status: 404,
+          cause: null,
+        });
+      case 500:
+        throw new ApiError({
+          code: 'SERVER_ERROR',
+          message: res.message,
+          status: 500,
+          cause: null,
+        });
+      default:
+        throw new ApiError({
+          code: 'UNKNOWN_ERROR',
+          message: '予期せぬエラーが発生しました',
+          status: res.status ?? null,
+          cause: null,
+        });
+    }
   }
 
   return result;

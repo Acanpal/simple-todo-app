@@ -5,6 +5,10 @@ import { Layout } from './components/Layout';
 import { UncompletedPage } from './pages/UncompletedPage';
 import { CompletedPage } from './pages/CompletedPage';
 import { useTodos } from './hooks/useTodos';
+import { AuthProvider } from './context/AuthContext';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   const {
@@ -27,29 +31,40 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Navigate to="uncompleted" replace />} /> {/* 未完了タスクページにリダイレクト */}
-          <Route path="uncompleted" element={
-            <UncompletedPage
-              todos={uncompletedTodos} // 未完了のタスク
-              handleAddTodo={addTodo} // 新規タスク追加用関数
-              handleDelete={deleteTodo} // タスク削除用関数
-              handleUpdate={updateTodo} // タスク更新用関数
-              onToggle={toggleTodoCompletion} // タスク完了状態更新用関数
-              handleDragEnd={handleDragEnd} // ドラッグ終了時の処理を渡す
-            />
-          } />
-          <Route path="completed" element={
-            <CompletedPage
-              todos={completedTodos} // 完了のタスク
-              handleDelete={deleteTodo} // タスク削除用関数
-              handleUpdate={updateTodo} // タスク更新用関数
-              onToggle={toggleTodoCompletion} // タスク完了状態更新用関数
-            />
-          } />
-        </Route>
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          {/* 未認証ユーザー用ルート */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+
+          {/* 認証ユーザー用ルート */}
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Layout />
+            </ProtectedRoute>
+          }>
+            <Route index element={<Navigate to="uncompleted" replace />} /> {/* 未完了タスクページにリダイレクト */}
+            <Route path="uncompleted" element={
+              <UncompletedPage
+                todos={uncompletedTodos} // 未完了のタスク
+                handleAddTodo={addTodo} // 新規タスク追加用関数
+                handleDelete={deleteTodo} // タスク削除用関数
+                handleUpdate={updateTodo} // タスク更新用関数
+                onToggle={toggleTodoCompletion} // タスク完了状態更新用関数
+                handleDragEnd={handleDragEnd} // ドラッグ終了時の処理を渡す
+              />
+            } />
+            <Route path="completed" element={
+              <CompletedPage
+                todos={completedTodos} // 完了のタスク
+                handleDelete={deleteTodo} // タスク削除用関数
+                handleUpdate={updateTodo} // タスク更新用関数
+                onToggle={toggleTodoCompletion} // タスク完了状態更新用関数
+              />
+            } />
+          </Route>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   )
 }
