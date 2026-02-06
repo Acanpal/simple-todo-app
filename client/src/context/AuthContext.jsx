@@ -8,21 +8,20 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null); // User情報(現在はtokenのみ)
+  const [loading, setLoading] = useState(true); // 認証チェック中フラグ
 
   // 初回ロード時にトークンがあるか確認
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // 本来はここで /api/auth/me などを呼んでユーザー情報を取得すべきだが
-      // 今回は簡易的に「トークンがあればログイン済み」とみなす
-      // またはデコードしてuserIdを取り出すなどの処理を入れる
+      //tokenにはUserIdが含まれる(本来はUserIDを入れるべき)
       setUser({ token });
     }
     setLoading(false);
   }, []);
 
+  // ログイン保存用API (POST)
   const login = async (email, password) => {
     const res = await apiFetch('http://localhost:3000/api/auth/login', {
       method: 'POST',
@@ -35,6 +34,7 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
+  // 新規登録用API (POST)
   const register = async (email, password) => {
     const res = await apiFetch('http://localhost:3000/api/auth/register', {
       method: 'POST',
@@ -45,11 +45,13 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
+  // ログアウト用API
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
   };
 
+  // アプリで使える値(グローバル変数)
   const value = {
     user,
     login,
@@ -60,7 +62,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {!loading && children} {/* ローディング中は表示しない */}
     </AuthContext.Provider>
   );
 };

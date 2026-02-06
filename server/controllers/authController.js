@@ -21,7 +21,7 @@ exports.register = async (req, res) => {
       where: { email },
     });
     if (existingUser) {
-      return res.status(409).json({ error: 'このメールアドレスは既に登録されています' });
+      return res.status(409).json({ message: 'このメールアドレスは既に登録されています' });
     }
 
     // パスワードのハッシュ化 (セキュリティ対策)
@@ -40,7 +40,7 @@ exports.register = async (req, res) => {
     console.error('Registration error:', error);
     res.status(500).json({
       code: 'REGISTRATION_ERROR',
-      error: 'ユーザー登録中にエラーが発生しました',
+      message: 'ユーザー登録中にエラーが発生しました',
       details: error.message
     });
   }

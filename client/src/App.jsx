@@ -33,9 +33,11 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
+          {/* 未認証ユーザー用ルート */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
+          {/* 認証ユーザー用ルート */}
           <Route path="/" element={
             <ProtectedRoute>
               <Layout />
